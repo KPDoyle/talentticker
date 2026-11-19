@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { parseRss } from "../../../../lib/talentticker";
+import { parseRss, mergeSignals } from "../../../../lib/talentticker";
 export const revalidate = 900;
 export async function GET() {
   const feeds = [{ name: "BBC Business", url: "https://feeds.bbci.co.uk/news/business/rss.xml" }, { name: "BBC Technology", url: "https://feeds.bbci.co.uk/news/technology/rss.xml" }];
@@ -12,7 +12,7 @@ export async function GET() {
     if (!signals.length) throw new Error("No readable articles");
     return signals;
   }));
-  const signals = results.flatMap(r => r.status === "fulfilled" ? r.value : []);
+  const signals = mergeSignals([], results.flatMap(r => r.status === "fulfilled" ? r.value : []));
   if (!signals.length) return NextResponse.json({ error: "News feeds are temporarily unavailable. Your saved records are unchanged. Please try again later." }, { status: 502 });
   return NextResponse.json({ signals, fetchedAt: new Date().toISOString(), partial: results.some(r => r.status === "rejected") });
 }

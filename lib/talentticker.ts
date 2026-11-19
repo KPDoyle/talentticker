@@ -64,6 +64,17 @@ export function companyScore(id: string, data: TTState) {
 export function csv(rows: unknown[][]) {
   return rows.map(row => row.map(value => { let text = String(value ?? ""); if (/^[\s]*[=+@-]/.test(text)) text = "'" + text; return '"' + text.replace(/"/g, '""') + '"'; }).join(",")).join("\r\n");
 }
+export function mergeSignals(existing: Signal[], incoming: Signal[]) {
+  const seenIds = new Set(existing.map(s => s.id));
+  const seenUrls = new Set(existing.map(s => s.url).filter(Boolean));
+  const added = incoming.filter(s => {
+    if (seenIds.has(s.id) || s.url && seenUrls.has(s.url)) return false;
+    seenIds.add(s.id);
+    if (s.url) seenUrls.add(s.url);
+    return true;
+  });
+  return [...existing, ...added];
+}
 const isObject = (v: unknown): v is Record<string, unknown> => !!v && typeof v === "object" && !Array.isArray(v);
 const strings = (v: Record<string, unknown>, keys: string[]) => keys.every(k => typeof v[k] === "string" && (v[k] as string).length <= 20000);
 const ids = (v: unknown): v is string[] => Array.isArray(v) && v.length <= 10000 && v.every(x => typeof x === "string" && x.length <= 300) && new Set(v).size === v.length;
